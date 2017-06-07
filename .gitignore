@@ -1,0 +1,18 @@
+# Created by .ignore support plugin (hsz.mobi)
+~*.pptx
+
+build/
+.gradle/
+gradle/
+.project
+.settings/
+.classpath
+target/
+test-output/
+*.zip
+*.odp
+*.ipr
+*.iws
+*.iml
+.idea/
+VAADIN/
