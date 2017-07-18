@@ -26,7 +26,7 @@ open class WeatherConfigurationRepository {
 
     fun getServiceInfo(): ServiceInfo {
         fun pairMerge(lp: Pair<String, String>, rp: Pair<String, String>): Pair<String, String> {
-            when (lp.first){
+            return when (lp.first) {
                 "" -> Pair(rp.first, lp.second)
                 else -> Pair(lp.first, rp.second)
             }
@@ -41,16 +41,18 @@ open class WeatherConfigurationRepository {
                         else -> ServiceInfo("", "")
                     }
                 }
-                .reduce {
+                .foldRight(ServiceInfo("", "")) {
                     l, r ->
-                    val pair = pairMerge(Pair(l.path, l.port))
+                    val pair = pairMerge(Pair(l.path, l.port), Pair(r.path, r.port))
                     return ServiceInfo(pair.first, pair.second)
                 }
         return reduce
     }
 
     fun getMode(): Mode {
-        return Mode.valueOf(System.getProperty("APP_MODE", Mode.CLIENT.toString()).toUpperCase())
+        val mode = System.getProperty("APP_MODE", Mode.PROXY.toString()).toUpperCase()
+        println("CURRENT CONFIGURED MODE IS: ${System.getProperties()}")
+        return Mode.valueOf(mode)
     }
 
 }

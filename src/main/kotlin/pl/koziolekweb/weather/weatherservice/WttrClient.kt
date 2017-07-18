@@ -1,5 +1,6 @@
 package pl.koziolekweb.weather.weatherservice
 
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.*
 import org.springframework.http.converter.ByteArrayHttpMessageConverter
@@ -16,13 +17,23 @@ import java.time.LocalDateTime
  * Created by koziolek on 08.06.17.
  */
 @RestController
-open class WttrClient(@Value("\${app.weather-service.storage}") val storage:String = ".") {
+open class WttrClient(@Value("\${app.weather-service.storage}") val storage: String = ".", @Autowired val wcr: WeatherConfigurationRepository = WeatherConfigurationRepository()) {
 
     @RequestMapping("/{city}")
     fun getWeatherFor(@PathVariable(name = "city", required = false) location: String): String {
+        var uri: String? = null
+        when (wcr.getMode()) {
+            Mode.PROXY -> {
+                uri = "http://wttr.in/$location"
+            }
+            Mode.CLIENT -> {
+                uri = "http://${wcr.getServiceInfo().path}:${wcr.getServiceInfo().port}/$location"
+            }
+        }
         val rt = RestTemplate()
-        val resp = rt.getForEntity("http://wttr.in/$location", String::class.java)
+        val resp = rt.getForEntity(uri, String::class.java)
         return resp.body
+
     }
 
     @RequestMapping("/{city}.png")
@@ -33,7 +44,7 @@ open class WttrClient(@Value("\${app.weather-service.storage}") val storage:Stri
         headers.accept = listOf(MediaType.APPLICATION_OCTET_STREAM)
         val entity = HttpEntity<String>(headers)
 
-        val resp:ResponseEntity<ByteArray> = rt.exchange("http://wttr.in/$location.png", HttpMethod.GET, entity, ByteArray::class.java)
+        val resp: ResponseEntity<ByteArray> = rt.exchange("http://wttr.in/$location.png", HttpMethod.GET, entity, ByteArray::class.java)
 
         when (resp.statusCode) {
             HttpStatus.OK -> Files.write(Paths.get("$storage/$location-${Timestamp.valueOf(LocalDateTime.now()).time}.png"), resp.body)
